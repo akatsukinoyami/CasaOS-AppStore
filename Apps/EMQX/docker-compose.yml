@@ -156,7 +156,7 @@ x-casaos:
     - ppc64le
   main: emqx
   author: akatsukinoyami
-  category: IoT
+  category: katsu's store
   description:
     en_us: |
       EMQX is a highly scalable, distributed MQTT broker designed for IoT, M2M, and mobile applications. It can handle millions of concurrent MQTT connections with low latency and high throughput.

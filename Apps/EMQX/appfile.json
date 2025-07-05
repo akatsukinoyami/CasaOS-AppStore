@@ -11,10 +11,7 @@
 		"https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-2.png",
 		"https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-3.png"
 	],
-	"category": [
-		"IoT",
-		"Network"
-	],
+	"category": ["katsu's store"],
 	"developer": {
 		"name": "EMQ Technologies Co., Ltd.",
 		"website": "https://www.emqx.io",
