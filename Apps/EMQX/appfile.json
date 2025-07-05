@@ -1,0 +1,198 @@
+{
+	"version": "2.0",
+	"title": "EMQX MQTT Broker",
+	"name": "emqx-mqtt",
+	"icon": "https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/icon.png",
+	"tagline": "Scalable Distributed MQTT Broker for IoT",
+	"overview": "EMQX is a highly scalable, distributed MQTT broker designed for IoT, M2M, and mobile applications. It can handle millions of concurrent MQTT connections with low latency and high throughput. This setup includes PostgreSQL database for persistent storage of authentication data, retained messages, and session information. The web dashboard is accessible with default credentials (admin/public).",
+	"thumbnail": "https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/thumbnail.png",
+	"screenshots": [
+		"https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-1.png",
+		"https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-2.png",
+		"https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-3.png"
+	],
+	"category": [
+		"IoT",
+		"Network"
+	],
+	"developer": {
+		"name": "EMQ Technologies Co., Ltd.",
+		"website": "https://www.emqx.io",
+		"donate_text": "",
+		"donate_link": ""
+	},
+	"adaptor": {
+		"name": "akatsukinoyami",
+		"website": "https://www.katsu.moe",
+		"donate_text": "",
+		"donate_link": ""
+	},
+	"support": "https://t.me/nyawoobot",
+	"website": "https://www.katsu.moe",
+	"container": {
+		"image": "emqx/emqx:5.8.0",
+		"shell": "sh",
+		"privileged": false,
+		"network_model": "bridge",
+		"web_ui": {
+			"http": "18083",
+			"path": "/"
+		},
+		"health_check": "",
+		"envs": [
+			{
+				"key": "EMQX_NAME",
+				"value": "emqx",
+				"configurable": "no",
+				"description": "EMQX Node Name"
+			},
+			{
+				"key": "EMQX_HOST",
+				"value": "127.0.0.1",
+				"configurable": "no",
+				"description": "EMQX Host"
+			},
+			{
+				"key": "EMQX_DASHBOARD__DEFAULT_USERNAME",
+				"value": "admin",
+				"configurable": "yes",
+				"description": "Dashboard Username"
+			},
+			{
+				"key": "EMQX_DASHBOARD__DEFAULT_PASSWORD",
+				"value": "public",
+				"configurable": "yes",
+				"description": "Dashboard Password"
+			},
+			{
+				"key": "EMQX_AUTH__1__BACKEND",
+				"value": "postgresql",
+				"configurable": "no",
+				"description": "Authentication Backend"
+			},
+			{
+				"key": "EMQX_AUTH__1__SERVER",
+				"value": "postgresql:5432",
+				"configurable": "no",
+				"description": "PostgreSQL Server"
+			},
+			{
+				"key": "EMQX_AUTH__1__USERNAME",
+				"value": "emqx",
+				"configurable": "no",
+				"description": "Database Username"
+			},
+			{
+				"key": "EMQX_AUTH__1__PASSWORD",
+				"value": "emqx_password",
+				"configurable": "yes",
+				"description": "Database Password"
+			},
+			{
+				"key": "EMQX_AUTH__1__DATABASE",
+				"value": "emqx_auth",
+				"configurable": "no",
+				"description": "Authentication Database"
+			}
+		],
+		"ports": [
+			{
+				"container": "1883",
+				"host": "1883",
+				"type": "tcp",
+				"allocation": "automatic",
+				"configurable": "yes",
+				"description": "MQTT TCP Port"
+			},
+			{
+				"container": "8083",
+				"host": "8083",
+				"type": "tcp",
+				"allocation": "automatic",
+				"configurable": "yes",
+				"description": "MQTT WebSocket Port"
+			},
+			{
+				"container": "8084",
+				"host": "8084",
+				"type": "tcp",
+				"allocation": "automatic",
+				"configurable": "yes",
+				"description": "MQTT WebSocket SSL Port"
+			},
+			{
+				"container": "8883",
+				"host": "8883",
+				"type": "tcp",
+				"allocation": "automatic",
+				"configurable": "yes",
+				"description": "MQTT SSL Port"
+			},
+			{
+				"container": "18083",
+				"host": "18083",
+				"type": "tcp",
+				"allocation": "automatic",
+				"configurable": "yes",
+				"description": "Dashboard Web Interface"
+			}
+		],
+		"volumes": [
+			{
+				"container": "/opt/emqx/data",
+				"host": "/DATA/AppData/$AppID/emqx/data",
+				"mode": "rw",
+				"allocation": "automatic",
+				"configurable": "no",
+				"description": "EMQX Data Directory"
+			},
+			{
+				"container": "/opt/emqx/log",
+				"host": "/DATA/AppData/$AppID/emqx/log",
+				"mode": "rw",
+				"allocation": "automatic",
+				"configurable": "no",
+				"description": "EMQX Log Directory"
+			},
+			{
+				"container": "/opt/emqx/etc",
+				"host": "/DATA/AppData/$AppID/emqx/etc",
+				"mode": "rw",
+				"allocation": "automatic",
+				"configurable": "no",
+				"description": "EMQX Configuration Directory"
+			}
+		],
+		"devices": [],
+		"constraints": {
+			"min_memory": 256,
+			"min_storage": 512
+		},
+		"restart_policy": "unless-stopped",
+		"sysctls": [],
+		"cap_add": [],
+		"labels": [],
+		"host_name": "",
+		"cmd": []
+	},
+	"abilities": {
+		"notification": false,
+		"widgets": false,
+		"authentication": true,
+		"search": false,
+		"upnp": false
+	},
+	"tips": {
+		"before_install": [
+			"This setup includes PostgreSQL database for authentication",
+			"Default dashboard credentials: admin/public",
+			"MQTT authentication is configured via PostgreSQL backend",
+			"Access dashboard at http://your-ip:18083"
+		]
+	},
+	"changelog": {
+		"latest_updates": "EMQX 5.8.0 with PostgreSQL authentication backend",
+		"url": "https://github.com/emqx/emqx/releases"
+	},
+	"latest_update_date": "2025-01-15"
+}

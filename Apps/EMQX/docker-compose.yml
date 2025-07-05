@@ -1,0 +1,268 @@
+name: emqx-mqtt
+services:
+  emqx:
+    hostname: emqx
+    container_name: emqx
+    image: emqx/emqx:5.8.0
+    deploy:
+      resources:
+        reservations:
+          memory: 128M
+    network_mode: bridge
+    ports:
+      - target: 1883
+        published: "1883"
+        protocol: tcp
+      - target: 8083
+        published: "8083"
+        protocol: tcp
+      - target: 8084
+        published: "8084"
+        protocol: tcp
+      - target: 8883
+        published: "8883"
+        protocol: tcp
+      - target: 18083
+        published: "18083"
+        protocol: tcp
+    restart: unless-stopped
+    environment:
+      - EMQX_NAME=emqx
+      - EMQX_HOST=127.0.0.1
+      - EMQX_DASHBOARD__DEFAULT_USERNAME=admin
+      - EMQX_DASHBOARD__DEFAULT_PASSWORD=public
+      # PostgreSQL Authentication Database
+      - EMQX_AUTH__1__BACKEND=postgresql
+      - EMQX_AUTH__1__SERVER=emqx-db:5432
+      - EMQX_AUTH__1__USERNAME=emqx
+      - EMQX_AUTH__1__PASSWORD=emqx_password
+      - EMQX_AUTH__1__DATABASE=emqx_auth
+      - EMQX_AUTH__1__PASSWORD_HASH=sha256
+      - EMQX_AUTH__1__QUERY_TIMEOUT=5s
+      - EMQX_AUTH__1__AUTH_QUERY=SELECT password_hash FROM mqtt_user WHERE username = $1 AND is_superuser = false
+      - EMQX_AUTH__1__SUPER_QUERY=SELECT password_hash FROM mqtt_user WHERE username = $1 AND is_superuser = true
+      # PostgreSQL ACL Database
+      - EMQX_ACL__1__BACKEND=postgresql
+      - EMQX_ACL__1__SERVER=emqx-db:5432
+      - EMQX_ACL__1__USERNAME=emqx
+      - EMQX_ACL__1__PASSWORD=emqx_password
+      - EMQX_ACL__1__DATABASE=emqx_auth
+      - EMQX_ACL__1__QUERY_TIMEOUT=5s
+      - EMQX_ACL__1__ACL_QUERY=SELECT allow, ipaddr, username, clientid, access, topic FROM mqtt_acl WHERE ipaddr = $1 OR username = $2 OR username = '$all' OR clientid = $3
+    volumes:
+      - type: bind
+        source: /DATA/AppData/$AppID/emqx/data
+        target: /opt/emqx/data
+      - type: bind
+        source: /DATA/AppData/$AppID/emqx/log
+        target: /opt/emqx/log
+      - type: bind
+        source: /DATA/AppData/$AppID/emqx/etc
+        target: /opt/emqx/etc
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    x-casaos:
+      ports:
+        - container: "1883"
+          description:
+            en_us: "MQTT TCP Port"
+            ru_ru: "MQTT TCP порт"
+        - container: "8083"
+          description:
+            en_us: "MQTT WebSocket Port"
+            ru_ru: "MQTT WebSocket порт"
+        - container: "8084"
+          description:
+            en_us: "MQTT WebSocket SSL Port"
+            ru_ru: "MQTT WebSocket SSL порт"
+        - container: "8883"
+          description:
+            en_us: "MQTT SSL Port"
+            ru_ru: "MQTT SSL порт"
+        - container: "18083"
+          description:
+            en_us: "Dashboard Web Interface"
+            ru_ru: "Веб-интерфейс панели управления"
+      volumes:
+        - container: /opt/emqx/data
+          description:
+            en_us: "EMQX Data Directory"
+            ru_ru: "Каталог данных EMQX"
+        - container: /opt/emqx/log
+          description:
+            en_us: "EMQX Log Directory"
+            ru_ru: "Каталог логов EMQX"
+        - container: /opt/emqx/etc
+          description:
+            en_us: "EMQX Configuration Directory"
+            ru_ru: "Каталог конфигурации EMQX"
+
+  emqx-db:
+    hostname: emqx-db
+    container_name: emqx-db
+    image: postgres:15-alpine
+    deploy:
+      resources:
+        reservations:
+          memory: 64M
+    network_mode: bridge
+    ports:
+      - target: 5432
+        published: "5432"
+        protocol: tcp
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=emqx
+      - POSTGRES_USER=emqx
+      - POSTGRES_PASSWORD=emqx_password
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - type: bind
+        source: /DATA/AppData/$AppID/postgresql/data
+        target: /var/lib/postgresql/data
+    configs:
+      - source: postgres_init
+        target: /docker-entrypoint-initdb.d/init-emqx-db.sql
+        mode: 0644
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emqx -d emqx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    x-casaos:
+      ports:
+        - container: "5432"
+          description:
+            en_us: "PostgreSQL Database Port"
+            ru_ru: "Порт базы данных PostgreSQL"
+      volumes:
+        - container: /var/lib/postgresql/data
+          description:
+            en_us: "PostgreSQL Data Directory"
+            ru_ru: "Каталог данных PostgreSQL"
+        - container: /docker-entrypoint-initdb.d
+          description:
+            en_us: "PostgreSQL Initialization Scripts"
+            ru_ru: "Скрипты инициализации PostgreSQL"
+
+x-casaos:
+  architectures:
+    - "386"
+    - amd64
+    - arm
+    - arm64
+    - ppc64le
+  main: emqx
+  author: akatsukinoyami
+  category: IoT
+  description:
+    en_us: |
+      EMQX is a highly scalable, distributed MQTT broker designed for IoT, M2M, and mobile applications. It can handle millions of concurrent MQTT connections with low latency and high throughput.
+      
+      Key Features:
+      - Massively scalable distributed MQTT broker
+      - Full MQTT 5.0 and 3.1.1 protocol support
+      - WebSocket and SSL/TLS support
+      - Built-in web dashboard for monitoring and management
+      - Rule engine for real-time data processing
+      - Multiple authentication and authorization methods
+      - Integration with various databases and message queues
+      
+      This setup includes PostgreSQL database for persistent storage of authentication data, retained messages, and session information. The web dashboard is accessible on port 18083 with default credentials (admin/public).
+    ru_ru: |
+      EMQX — это высокомасштабируемый распределенный MQTT-брокер, предназначенный для IoT, M2M и мобильных приложений. Он может обрабатывать миллионы одновременных MQTT-соединений с низкой задержкой и высокой пропускной способностью.
+      
+      Ключевые особенности:
+      - Масштабируемый распределенный MQTT-брокер
+      - Полная поддержка протоколов MQTT 5.0 и 3.1.1
+      - Поддержка WebSocket и SSL/TLS
+      - Встроенная веб-панель для мониторинга и управления
+      - Механизм правил для обработки данных в реальном времени
+      - Множественные методы аутентификации и авторизации
+      - Интеграция с различными базами данных и очередями сообщений
+      
+      Эта конфигурация включает базу данных PostgreSQL для постоянного хранения данных аутентификации, сохраненных сообщений и информации о сессиях. Веб-панель доступна на порту 18083 с учетными данными по умолчанию (admin/public).
+    zh_cn: |
+      EMQX 是一个高度可扩展的分布式 MQTT 代理，专为物联网、M2M 和移动应用程序设计。它能够以低延迟和高吞吐量处理数百万个并发 MQTT 连接。
+      
+      主要特性：
+      - 大规模可扩展的分布式 MQTT 代理
+      - 完整支持 MQTT 5.0 和 3.1.1 协议
+      - WebSocket 和 SSL/TLS 支持
+      - 内置 Web 仪表板用于监控和管理
+      - 实时数据处理规则引擎
+      - 多种认证和授权方法
+      - 与各种数据库和消息队列的集成
+      
+      此设置包括 PostgreSQL 数据库，用于持久存储认证数据、保留消息和会话信息。Web 仪表板可通过端口 18083 访问，默认凭据为 (admin/public)。
+  developer: EMQ Technologies Co., Ltd.
+  icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/icon.png
+  screenshot_link:
+    - https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-1.png
+    - https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-2.png
+    - https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/screenshot-3.png
+  tagline:
+    en_us: Scalable Distributed MQTT Broker for IoT
+    ru_ru: Масштабируемый распределенный MQTT-брокер для IoT
+    zh_cn: 面向物联网的可扩展分布式 MQTT 代理
+  thumbnail: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/thumbnail.png
+  tips: {}
+  title:
+    en_us: EMQX MQTT Broker
+    ru_ru: EMQX MQTT Брокер
+  index: /
+  port_map: "18083"
+
+configs:
+  postgres_init:
+    content: |
+      -- Create EMQX authentication database
+      CREATE DATABASE emqx_auth;
+
+      -- Connect to the authentication database
+      \c emqx_auth;
+
+      -- Create table for MQTT users
+      CREATE TABLE mqtt_user (
+        id serial PRIMARY KEY,
+        username text NOT NULL UNIQUE,
+        password_hash  text NOT NULL,
+        salt text NOT NULL,
+        is_superuser boolean DEFAULT false,
+        created timestamp with time zone DEFAULT NOW()
+      );
+
+      -- Create table for MQTT ACL (Access Control List)
+      CREATE TABLE mqtt_acl (
+        id serial PRIMARY KEY,
+        username text NOT NULL,
+        permission text NOT NULL,
+        action text NOT NULL,
+        topic text NOT NULL,
+        qos smallint,
+        retain smallint
+      );
+
+      -- Create indexes for better performance
+      CREATE INDEX idx_mqtt_user_username ON mqtt_user(username);
+      CREATE INDEX idx_mqtt_acl_username ON mqtt_acl(username);
+      CREATE INDEX idx_mqtt_acl_clientid ON mqtt_acl(clientid);
+      CREATE INDEX idx_mqtt_acl_topic ON mqtt_acl(topic);
+
+      -- Insert default superuser (admin/admin)
+      -- Password hash for 'admin' using SHA256
+      INSERT INTO mqtt_user (username, password_hash, salt, is_superuser) VALUES 
+        (1,'katsu','109dddef67cc8b918143270f789f420acfb08b8cce8a148cdf8f268e0206c0d5','nya','true','2024-12-03 08:40:11.154973+00'),
+        (2,'homeassistant','d81d34ed93ef0d6e753fadab611dd22d92a0d6e713552022c66d5c35ae1580ce','nya','false','2024-12-03 08:40:11.154973+00'),
+        (3,'zigbee2mqtt','8b984879573582ac8f5051473ed21f09346bd314bb2866f0f5daa986e7abb547','nya','false','2024-12-03 08:40:11.154973+00'),
+        (4,'nodered','1df81390a0e30ed4ecfe0b25f9e79979fbd2e812adb90b8c56092a7166cfc8ea','nya','false','2024-12-08 17:22:57.317165+00'),
+        (5,'jkbms','3c00e00014cc108ddbaf097338cd559039d16a600aee07cf0ff3852d652ec97d','nya','false','2024-12-14 20:48:23.320169+00'),
+        (6,'kuma','e0be12f0d0d84a20704f90795ed29f596b6bbc8bfba9729c17b01a8580be6283','nya','false','2025-01-31 23:05:13.543954+00'),
+        (7,'frigate','cf729ef7391f7db47f459d0c4a878a43f472821f0557f6beea4b4fddc69e5fd8','nya','false','2025-03-14 19:33:29.491953+00');
+
+      -- Grant permissions to emqx user
+      GRANT ALL PRIVILEGES ON DATABASE emqx_auth TO emqx;
+      GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO emqx;
+      GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO emqx;
