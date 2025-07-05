@@ -210,8 +210,7 @@ x-casaos:
   thumbnail: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/EMQX/thumbnail.png
   tips: {}
   title:
-    en_us: EMQX MQTT Broker
-    ru_ru: EMQX MQTT Брокер
+    en_us: EMQX
   index: /
   port_map: "18083"
 
